@@ -27,19 +27,40 @@
       },
 
       "SSHKeyName": {
-         "Description" : "Name of the SSH key that you will use to access the server (must be on AWS Availability Zone already)",
-         "Type" : "String"
+          "Description": "Name of the SSH key that you will use to access the server (must be on AWS Availability Zone already)",
+          "Type": "String"
       },
+        "DBUsername": {
+            "Default": "admin",
+            "NoEcho": "true",
+            "Description": "The WordPress database admin account username",
+            "Type": "String",
+            "MinLength": "1",
+            "MaxLength": "16",
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+        },
 
-      "NetworkWhitelist" : {
-        "Description" : " The IP address range that can be used to connect to the Neo4j server (by REST or SSH)",
-        "Type": "String",
-        "MinLength": "9",
-        "MaxLength": "18",
-        "Default": "0.0.0.0/0",
-        "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-        "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-      } 
+        "DBPassword": {
+            "Default": "password",
+            "NoEcho": "true",
+            "Description": "The WordPress database admin account password",
+            "Type": "String",
+            "MinLength": "8",
+            "MaxLength": "41",
+            "AllowedPattern": "[a-zA-Z0-9]*",
+            "ConstraintDescription": "must contain only alphanumeric characters."
+        },
+
+        "NetworkWhitelist": {
+            "Description": " The IP address range that can be used to connect to the Neo4j server (by REST or SSH)",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        }
     },
     "Resources": {
         "ElasticIP": {
@@ -52,11 +73,68 @@
         },
         "Server": {
             "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                               "AWS::CloudFormation::Init": {
+                                   "config": {
+                                       "files": {
+                                           "/etc/haproxy/haproxy.cfg": {
+                                               "content": {
+                                                   "Fn::Join": ["", [
+                                                       "global\n",
+                                                       "    daemon\n",
+                                                       "    maxconn 256\n",
+                                                       "\n",
+                                                       "defaults\n",
+                                                       "    mode http\n",
+                                                       "    timeout connect 5000ms\n",
+                                                       "    timeout client 50000ms\n",
+                                                       "    timeout server 50000ms\n",
+                                                       "",
+                                                       "frontend http-in\n",
+                                                       "    bind *:80\n",
+                                                       "    default_backend neo4j\n",
+                                                       "",
+                                                       "userlist users\n",
+                                                       "  user ", {
+                                                           "Ref": "DBUsername"
+                                                       }, " insecure-password ", {
+                                                           "Ref": "DBPassword"
+                                                       }, "\n",
+                                                       "\n",
+                                                       "backend neo4j\n",
+                                                       "    server s1 127.0.0.1:7474 maxconn 32\n",
+                                                       "    acl authenticated http_auth(users)\n",
+                                                       "    http-request auth realm Neo4j if !authenticated\n",
+                                                       "\n",
+                                                       "listen admin\n",
+                                                       "    bind *:8080\n",
+                                                       "    stats enable\n"]]
+                                               },
+                                               "mode": "000644",
+                                               "owner": "root",
+                                               "group": "root"
+                                           }
+                                       }
+                                   }
+                               }
+                           },
             "Properties": {
-                "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" }] },
+                "AvailabilityZone": {
+                    "Fn::Select": [ 0, {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+
+
                 "DisableApiTermination": "FALSE",
-                "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, "64"] },
-                "InstanceType": { "Ref" : "InstanceType" },
+                "ImageId": {
+                    "Fn::FindInMap": [ "AWSRegionArch2AMI", {
+                        "Ref": "AWS::Region"
+                    }, "64"]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
                 "KeyName": {"Ref": "SSHKeyName"},
                 "Monitoring": "false",
                 "SecurityGroups": [
@@ -80,10 +158,16 @@
                         "wget -O - http://debian.neo4j.org/neotechnology.gpg.key| apt-key add -\n",
                         "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list\n",
                         "aptitude update -y\n",
-                        "aptitude install -y neo4j\n",
+                        "aptitude install -y neo4j haproxy  python-setuptools\n",
                         "# tweak the config\n",
-                        "sed -i 's/^#\\(org.neo4j.server.webserver.address\\)/\\1/' /etc/neo4j/neo4j-server.properties\n",
-                        "service neo4j-service restart\n"
+                        "sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy\n",
+                        "wget -P /root https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz","\n",
+                        "mkdir -p /root/aws-cfn-bootstrap-latest","\n",
+                        "tar xvfz /root/aws-cfn-bootstrap-latest.tar.gz --strip-components=1 -C /root/aws-cfn-bootstrap-latest","\n",
+                        "easy_install /root/aws-cfn-bootstrap-latest/","\n",
+                        "/usr/local/bin/cfn-init -s ",{ "Ref":"AWS::StackName" }," -r Server --region ",{"Ref":"AWS::Region"},"\n",
+                        "service neo4j-service restart\n",
+                        "service haproxy restart\n"
                 ]]}},
                 "Volumes" : [
                           { "VolumeId" : { "Ref" : "EBSVolume" },
@@ -112,21 +196,23 @@
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "7474",
-                        "ToPort": "7474",
+                        "FromPort": "80",
+                        "ToPort": "80",
                         "CidrIp": { "Ref": "NetworkWhitelist" }
                     }
                 ]
             }
         }
+
     },
+
     "Outputs": {
         "Neo4jWebadmin" : {
-            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, ":7474"]] },
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}]] },
             "Description" : "This is the address of your Neo4j server web administration console."
           },
         "Neo4jEndPoint" : {
-            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, ":7474/db/data"]] },
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, "/db/data"]] },
             "Description" : "This is the address of your Neo4j server, that your application will use."
           },
         "SshAccess": {
