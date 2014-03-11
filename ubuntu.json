@@ -32,7 +32,7 @@
       },
         "DBUsername": {
             "NoEcho": "true",
-            "Description": "The WordPress database admin account username",
+            "Description": "The Neo4j username",
             "Type": "String",
             "MinLength": "1",
             "MaxLength": "16",
@@ -42,7 +42,7 @@
 
         "DBPassword": {
             "NoEcho": "true",
-            "Description": "The WordPress database admin account password",
+            "Description": "The Neo4j password",
             "Type": "String",
             "MinLength": "8",
             "MaxLength": "41",
