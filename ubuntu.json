@@ -31,7 +31,6 @@
           "Type": "String"
       },
         "DBUsername": {
-            "NoEcho": "true",
             "Description": "The Neo4j username",
             "Type": "String",
             "MinLength": "1",
