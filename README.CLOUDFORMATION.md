@@ -50,7 +50,7 @@ Usage
 * Fill in the _Stack Name_ field (whatever name you'd like)
 * Click the _Provide a template URL_ radio button
 * Paste [the Amazon Linux Template](https://cf-templates.neo4j.org.s3.amazonaws.com/amazon_linux.json) or [the Ubuntu Template](https://cf-templates.neo4j.org.s3.amazonaws.com/ubuntu.json) into the field next to the button
-* Click the _Continue_ button
+* Click the _Create_ button
 * Fill in the 3 parameters.
     * The _SSHKeyName_ parameter is the name of your EC2 Key pair (we suggested NEO4J)
     * The Network Whitelist allows you to control access to your database.  You can restrict it to your own IP address using the _/32_ suffix.  The default (0.0.0.0/0) will allow connections from anywhere on the public Internet.
