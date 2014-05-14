@@ -1,7 +1,7 @@
 NEO4J on AWS EC2
 ----------------
 
-CloudFormation templates that bootstrap Neo4j onto an Amazon EC2 machine, in Amazon Linux or Ubuntu flavours.
+CloudFormation templates that bootstrap Neo4j onto an Amazon EC2 machine, in Amazon Linux or Ubuntu flavours.  These will install the _stable_ version of Neo4j.
 
 [Documentation](/README.CLOUDFORMATION.md)
 
