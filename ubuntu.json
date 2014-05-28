@@ -16,13 +16,13 @@
 
   },
 
-    
+
     "Parameters": {
       "InstanceType" : {
         "Description" : "EC2 instance type",
         "Type" : "String",
-        "Default" : "m1.small",
-        "AllowedValues" : [ "t1.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge"],
+        "Default" : "m3.medium",
+        "AllowedValues" : [ "m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.medium","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge"],
         "ConstraintDescription" : "must be a valid EC2 instance type."
       },
 
@@ -69,51 +69,6 @@
         },
         "Server": {
             "Type": "AWS::EC2::Instance",
-            "Metadata": {
-                               "AWS::CloudFormation::Init": {
-                                   "config": {
-                                       "files": {
-                                           "/etc/haproxy/haproxy.cfg": {
-                                               "content": {
-                                                   "Fn::Join": ["", [
-                                                       "global\n",
-                                                       "    daemon\n",
-                                                       "    maxconn 256\n",
-                                                       "\n",
-                                                       "defaults\n",
-                                                       "    mode http\n",
-                                                       "    timeout connect 5000ms\n",
-                                                       "    timeout client 50000ms\n",
-                                                       "    timeout server 50000ms\n",
-                                                       "",
-                                                       "frontend http-in\n",
-                                                       "    bind *:80\n",
-                                                       "    default_backend neo4j\n",
-                                                       "",
-                                                       "userlist users\n",
-                                                       "  user ", {
-                                                           "Ref": "DBUsername"
-                                                       }, " insecure-password ", {
-                                                           "Ref": "DBPassword"
-                                                       }, "\n",
-                                                       "\n",
-                                                       "backend neo4j\n",
-                                                       "    server s1 127.0.0.1:7474 maxconn 32\n",
-                                                       "    acl authenticated http_auth(users)\n",
-                                                       "    http-request auth realm Neo4j if !authenticated\n",
-                                                       "\n",
-                                                       "listen admin\n",
-                                                       "    bind *:8080\n",
-                                                       "    stats enable\n"]]
-                                               },
-                                               "mode": "000644",
-                                               "owner": "root",
-                                               "group": "root"
-                                           }
-                                       }
-                                   }
-                               }
-                           },
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [ 0, {
@@ -150,18 +105,43 @@
                         "mkdir -p /var/lib/neo4j\n",
                         "mkfs.ext4 /dev/xvdj\n",
                         "mount /dev/xvdj /var/lib/neo4j\n",
-                        "# install the packages \n",
                         "wget -O - http://debian.neo4j.org/neotechnology.gpg.key| apt-key add -\n",
                         "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list\n",
-                        "aptitude update -y\n",
-                        "aptitude install -y neo4j haproxy  python-setuptools\n",
+                        "apt-get update -y\n",
+                        "apt-get install -y neo4j haproxy\n",
+                        "cat <<EOF > /etc/haproxy/haproxy.cfg\n",
+                        "global\n",
+                        "    daemon\n",
+                        "    maxconn 256\n",
+                        "\n",
+                        "defaults\n",
+                        "    mode http\n",
+                        "    timeout connect 5000ms\n",
+                        "    timeout client 50000ms\n",
+                        "    timeout server 50000ms\n",
+                        "",
+                        "frontend http-in\n",
+                        "    bind *:80\n",
+                        "    default_backend neo4j\n",
+                        "",
+                        "userlist users\n",
+                        "  user ",
+                        {"Ref": "DBUsername"},
+                        " insecure-password ",
+                        {"Ref": "DBPassword"},
+                        "\n",
+                        "backend neo4j\n",
+                        "    server s1 127.0.0.1:7474 maxconn 32\n",
+                        "    acl authenticated http_auth(users)\n",
+                        "    http-request auth realm Neo4j if !authenticated\n",
+                        "\n",
+                        "listen admin\n",
+                        "    bind *:8080\n",
+                        "    stats enable\n",
+                        "EOF\n",
+                        "# install the packages \n",
                         "# tweak the config\n",
                         "sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy\n",
-                        "wget -P /root https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz","\n",
-                        "mkdir -p /root/aws-cfn-bootstrap-latest","\n",
-                        "tar xvfz /root/aws-cfn-bootstrap-latest.tar.gz --strip-components=1 -C /root/aws-cfn-bootstrap-latest","\n",
-                        "easy_install /root/aws-cfn-bootstrap-latest/","\n",
-                        "/usr/local/bin/cfn-init -s ",{ "Ref":"AWS::StackName" }," -r Server --region ",{"Ref":"AWS::Region"},"\n",
                         "service neo4j-service restart\n",
                         "service haproxy restart\n"
                 ]]}},
@@ -212,7 +192,7 @@
             "Description" : "This is the address of your Neo4j server, that your application will use."
           },
         "SshAccess": {
-            "Value" : {"Fn::Join" : ["", ["ssh -i ", {"Ref": "SSHKeyName"}, ".pem -l ubuntu ", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}]]},
+            "Value" : {"Fn::Join" : ["", ["ssh -i ${HOME}/.ssh/", {"Ref": "SSHKeyName"}, ".pem -l ubuntu ", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}]]},
             "Description" : "This is how you gain remote access to the machine."
         },
         "Note" :{
