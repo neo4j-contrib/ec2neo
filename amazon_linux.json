@@ -1,0 +1,221 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description": "Neo4j on AWS - creates an EC2 Amazon Linux machine, EBS volume, static IP address, and deploys the Neo4j Graph Database on it.  **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template. **NOTE** This template needs Neo4j 2.0.1 to run.",
+
+  "Parameters" : {
+
+    "SSHKeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "AllowedPattern" : "[\\x20-\\x7E]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+    },
+
+    "InstanceType" : {
+      "Description" : "Server EC2 instance type",
+      "Type" : "String",
+      "Default" : "m1.small",
+      "AllowedValues" : [ "m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.medium","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    },
+    "NetworkWhiteList" : {
+      "Description" : " The IP address range that can be used to SSH to the EC2 instances",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    }
+  },
+
+  "Mappings" : {
+    "AWSInstanceType2Arch" : {
+      "t1.micro"    : { "Arch" : "64" },
+      "m1.small"    : { "Arch" : "64" },
+      "m1.medium"   : { "Arch" : "64" },
+      "m1.large"    : { "Arch" : "64" },
+      "m1.xlarge"   : { "Arch" : "64" },
+      "m2.xlarge"   : { "Arch" : "64" },
+      "m2.2xlarge"  : { "Arch" : "64" },
+      "m2.4xlarge"  : { "Arch" : "64" },
+      "m3.medium"   : { "Arch" : "64" },
+      "m3.xlarge"   : { "Arch" : "64" },
+      "m3.2xlarge"  : { "Arch" : "64" },
+      "c1.medium"   : { "Arch" : "64" },
+      "c1.xlarge"   : { "Arch" : "64" },
+      "cc1.4xlarge" : { "Arch" : "64HVM" },
+      "cc2.8xlarge" : { "Arch" : "64HVM" },
+      "cg1.4xlarge" : { "Arch" : "64HVM" }
+    },
+
+    "AWSRegionArch2AMI" : {
+      "us-east-1"      : { "32" : "ami-31814f58", "64" : "ami-1b814f72", "64HVM" : "ami-0da96764" },
+      "us-west-2"      : { "32" : "ami-38fe7308", "64" : "ami-30fe7300", "64HVM" : "NOT_YET_SUPPORTED" },
+      "us-west-1"      : { "32" : "ami-11d68a54", "64" : "ami-1bd68a5e", "64HVM" : "NOT_YET_SUPPORTED" },
+      "eu-west-1"      : { "32" : "ami-973b06e3", "64" : "ami-953b06e1", "64HVM" : "NOT_YET_SUPPORTED" },
+      "ap-southeast-1" : { "32" : "ami-b4b0cae6", "64" : "ami-beb0caec", "64HVM" : "NOT_YET_SUPPORTED" },
+      "ap-southeast-2" : { "32" : "ami-b3990e89", "64" : "ami-bd990e87", "64HVM" : "NOT_YET_SUPPORTED" },
+      "ap-northeast-1" : { "32" : "ami-0644f007", "64" : "ami-0a44f00b", "64HVM" : "NOT_YET_SUPPORTED" },
+      "sa-east-1"      : { "32" : "ami-3e3be423", "64" : "ami-3c3be421", "64HVM" : "NOT_YET_SUPPORTED" }
+    }
+  },
+
+  "Resources" : {
+
+    "Server": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "configSets": {
+            "default": ["yumRepoConfig", "configDisk", "neoInstall"]
+          },
+          "configDisk": {
+            "commands": {
+              "01formatFS": {
+                "command": "/sbin/mkfs.ext4 /dev/xvdj"
+              },
+              "02mkdir": {
+                "command": "mkdir -p /var/lib/neo4j"
+              },
+              "03mountFS": {
+                "command": "/bin/mount /dev/xvdj /var/lib/neo4j"
+              }
+            }
+          },
+          "yumRepoConfig": {
+            "files": {
+              "/etc/yum.repos.d/neo4j.repo" : {
+                "mode"    : "000644",
+                "owner"   : "root",
+                "group"   : "root",
+                "content" : { "Fn::Join" : ["", [
+                  "[neo4j]\n",
+                  "name=Neo4j Yum Repo\n",
+                  "baseurl=http://yum.neo4j.org\n",
+                  "enabled=1\n",
+                  "gpgcheck=1\n" ]]}
+              },
+              "/tmp/neotechnology.gpg.key": {
+                "source"  : "http://debian.neo4j.org/neotechnology.gpg.key",
+                "mode"    : "000644",
+                "owner"   : "root",
+                "group"   : "root"
+                }
+            },
+
+
+            "commands": {
+              "01 import key": {
+                "command": "rpm --import /tmp/neotechnology.gpg.key"
+              }
+            }
+          },
+          "neoInstall": {
+            "packages" : {
+              "yum" : {
+                "neo4j"      : []
+              }
+            },
+            "commands": {
+              "01 tweak config key": {
+                "command": "sed -i 's/^#\\(org.neo4j.server.webserver.address\\)/\\1/' /etc/neo4j/neo4j-server.properties"
+              },
+              "02 restart service": {
+                "command": "service neo4j restart"
+              }
+            },
+            "services" : {
+              "sysvinit" : {
+                "neo4j" : {
+                  "enabled"       : "true",
+                  "ensureRunning" : "true"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
+        "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" }] },
+        "InstanceType"   : { "Ref" : "InstanceType" },
+        "SecurityGroups" : [ {"Ref" : "FrontendGroup"} ],
+        "KeyName"        : { "Ref" : "SSHKeyName" },
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -v\n",
+          "yum update -y aws-cfn-bootstrap\n",
+
+          "# Helper function\n",
+          "function error_exit\n",
+          "{\n",
+          "  /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", { "Ref" : "WaitHandle" }, "'\n",
+          "  exit 1\n",
+          "}\n",
+
+          "# Install packages\n",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r Server ",
+          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+          "# All is well so signal success\n",
+          "/opt/aws/bin/cfn-signal -e 0 -r \"Neo4j setup complete\" '", { "Ref" : "WaitHandle" }, "'\n"
+        ]]}},
+      "Volumes" : [
+        { "VolumeId" : { "Ref" : "EBSVolume" },
+                         "Device" : "/dev/sdj"
+        }]
+      }
+    },
+    "EBSVolume": {
+      "Type": "AWS::EC2::Volume",
+      "Properties": {
+        "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" }] },
+        "Size": "100"
+      }
+    },
+
+    "WaitHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+
+    "WaitCondition" : {
+      "Type" : "AWS::CloudFormation::WaitCondition",
+      "DependsOn" : "Server",
+      "Properties" : {
+        "Handle" : {"Ref" : "WaitHandle"},
+        "Timeout" : "1500"
+      }
+    },
+
+    "FrontendGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable HTTP access via port 7474 plus SSH access",
+        "SecurityGroupIngress" : [
+          {"IpProtocol" : "tcp", "FromPort" : "7474", "ToPort" : "7474", "CidrIp" : {"Ref": "NetworkWhiteList"}},
+          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "NetworkWhiteList"}}
+        ]
+      }
+  }
+},
+
+  "Outputs" : {
+     "Neo4jWebadmin" : {
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, ":7474"]] },
+            "Description" : "This is the address of your Neo4j server web administration console."
+          },
+        "Neo4jEndPoint" : {
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, ":7474/db/data"]] },
+            "Description" : "This is the address of your Neo4j server, that your application will use."
+          },
+        "SshAccess": {
+            "Value" : {"Fn::Join" : ["", ["ssh -i ", {"Ref": "SSHKeyName"}, ".pem -l ec2-user ", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}]]},
+            "Description" : "This is how you gain remote access to the machine."
+        }
+
+  }
+}
