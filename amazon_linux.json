@@ -4,6 +4,23 @@
   "Description": "Neo4j on AWS - creates an EC2 Amazon Linux machine, EBS volume, static IP address, and deploys the Neo4j Graph Database on it.  **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template. **NOTE** This template needs Neo4j 2.0.1 to run.",
 
   "Parameters" : {
+    "DBUsername": {
+            "Description": "The Neo4j username",
+            "Type": "String",
+            "MinLength": "1",
+            "MaxLength": "16",
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
+    },
+
+    "DBPassword": {
+            "NoEcho": "true",
+            "Description": "The Neo4j password",
+            "Type": "String",
+            "MinLength": "8",
+            "MaxLength": "41",
+            "ConstraintDescription": "Must be at least eight characters long."
+    },
 
     "SSHKeyName": {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
