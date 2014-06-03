@@ -55,7 +55,7 @@ task :validate do
   end
 end
 
-task :test do
+task :test => :validate do
   raise "Set the SSHKEYNAME var first" unless ENV['SSHKEYNAME']
   Dir.glob('*.json').each do |template|
     timestamp = Time.now.strftime('%FT%T').gsub(/:|-/,'')
