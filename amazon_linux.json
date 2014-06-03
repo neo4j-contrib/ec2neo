@@ -171,8 +171,8 @@
           "neoInstall": {
             "packages" : {
               "yum" : {
-                "neo4j"      : [],
-                "haproxy"      : []
+                "neo4j-enterprise"    : [],
+                "haproxy"             : []
               }
             },
             "commands": {

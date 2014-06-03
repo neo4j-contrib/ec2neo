@@ -39,7 +39,7 @@ Choosing an OS
 
 We support 2 Operating Systems:
 
-* Amazon Linux is based on Red Hat Linux, and the 2.0.1 release of Neo4j will be supported.
+* Amazon Linux is based on Red Hat Linux, and the stable release of Neo4j will be supported.
 * Ubuntu Linux is an easy to use Linux distribution, and we recommend you use this if you're not sure which to choose.
 
 Usage
