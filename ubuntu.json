@@ -142,6 +142,7 @@
                         "# install the packages \n",
                         "# tweak the config\n",
                         "sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy\n",
+                        "echo 'wrapper.java.additional=-Dneo4j.ext.udc.source=ec2neo' >> /etc/neo4j/neo4j-wrapper.conf\n",
                         "service neo4j-service restart\n",
                         "service haproxy restart\n"
                 ]]}},

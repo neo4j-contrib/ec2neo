@@ -179,7 +179,10 @@
               "01 tweak config key": {
                 "command": "sed -i 's/^#\\(org.neo4j.server.webserver.address\\)/\\1/' /etc/neo4j/neo4j-server.properties"
               },
-              "02 restart service": {
+              "02 set UDC source service": {
+                "command": "echo 'wrapper.java.additional=-Dneo4j.ext.udc.source=ec2neo' >> /etc/neo4j/neo4j-wrapper.conf"
+              },
+              "03 restart service": {
                 "command": "service neo4j restart"
               }
             },
