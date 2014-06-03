@@ -121,7 +121,44 @@
                 "mode"    : "000644",
                 "owner"   : "root",
                 "group"   : "root"
-                }
+                },
+              "/etc/haproxy/haproxy.cfg": {
+                   "content": {
+                       "Fn::Join": ["", [
+                           "global\n",
+                           "    daemon\n",
+                           "    maxconn 256\n",
+                           "\n",
+                           "defaults\n",
+                           "    mode http\n",
+                           "    timeout connect 5000ms\n",
+                           "    timeout client 50000ms\n",
+                           "    timeout server 50000ms\n",
+                           "",
+                           "frontend http-in\n",
+                           "    bind *:80\n",
+                           "    default_backend neo4j\n",
+                           "",
+                           "userlist users\n",
+                           "  user ", {
+                               "Ref": "DBUsername"
+                           }, " insecure-password ", {
+                               "Ref": "DBPassword"
+                           }, "\n",
+                           "\n",
+                           "backend neo4j\n",
+                           "    server s1 127.0.0.1:7474 maxconn 32\n",
+                           "    acl authenticated http_auth(users)\n",
+                           "    http-request auth realm Neo4j if !authenticated\n",
+                           "\n",
+                           "listen admin\n",
+                           "    bind *:8080\n",
+                           "    stats enable\n"]]
+                   },
+                   "mode": "000644",
+                   "owner": "root",
+                   "group": "root"
+              }
             },
 
 
@@ -134,7 +171,8 @@
           "neoInstall": {
             "packages" : {
               "yum" : {
-                "neo4j"      : []
+                "neo4j"      : [],
+                "haproxy"      : []
               }
             },
             "commands": {
