@@ -1,8 +1,6 @@
-NEO4J on AWS EC2
-================
+# NEO4J on AWS EC2
 
-About
------
+## About
 
 CloudFormation templates that bootstrap Neo4j onto an [Amazon AWS](http://aws.amazon.com/) EC2 machine, in Amazon Linux or Ubuntu flavours.  These will install the _stable_ version of Neo4j.
 
@@ -15,8 +13,7 @@ What you'll get:
 
 It runs in all current (January 2014) Amazon Regions. It uses Amazon Security Groups to optionally secure the database.
 
-Cost
-----
+## Cost
 
 If you use this tool, you'll be creating a "stack" of the following on Amazon AWS:
 
@@ -29,8 +26,7 @@ Amazon will charge the cost for all this to your credit card on an hourly basis,
 Please look up the [pricing calculator](http://calculator.s3.amazonaws.com/calc5.html) if you're concerned about
 the hosting cost.
 
-Pre-requisites
---------------
+## Pre-requisites
 
 To use this tool you'll need:
 
@@ -39,16 +35,14 @@ To use this tool you'll need:
 * A browser
 * If you want to restrict access to the database, you'll want to know what IP address range to restrict it to.  You can [easily find that](http://ipinfo.io/).
 
-Choosing an OS
---------------
+## Choosing an OS
 
 We support 2 Operating Systems:
 
 * Amazon Linux is based on Red Hat Linux, and the stable release of Neo4j will be supported.
 * Ubuntu Linux is an easy to use Linux distribution, and we recommend you use this if you're not sure which to choose.
 
-Usage
------
+## Usage
 
 * Log onto [the AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home?region=us-east-1) with your AWS account.
 * Click _Create New Stack_
@@ -78,30 +72,28 @@ Usage
 
 * Configure your application to talk to the endpoint.
 
-Storage
--------
+## Storage
 The Neo4j database is stored on an Amazon EBS volume.  Right now, that volume is removed when the CloudFormation stack is removed.  We may change this in a future release.
 
 
-Backups
--------
-We write backups to the Amazon ephemeral storage (/mnt).  We'll probably change this in due course.
+## Backups
+We write daily gzipped backups to the Amazon ephemeral storage (/mnt).  We'll probably change this in due course.
 
 
-Decomissioning
---------------
+## Decomissioning
 
 If you're done using your Neo4j installation, you can delete the stack from the AWS CloudFormation console.
 
-Troubleshooting
----------------
+## Troubleshooting
 
-*Why might this go wrong?*
+### Why might this go wrong?
 
 * Resources are sometimes not available at Amazon.  That's just part of our brave new cloudy world.  Right now the templates will attempt to use the first availability zone in the region.
 * It's hard to legally and reliably get the Oracle JVM onto the system. So we're using OpenJDK.  This should not cause issues, but Neo4j may complain on start.  You can safely ignore that message.
 * Sometimes, something will happen that we cannot predict.  We'd appreciate your help here; a [GitHub issue](/../../issues) or email to the Mailing List with some [smart questions](http://www.catb.org/esr/faqs/smart-questions.html#uselists) or observations.
 
-*How to see detail:*
+### How to see detail:
 
-You can use the Get System Log feature of EC2 to see the output of this template.  If you're on the Amazon Linux template, you can SSH onto the machine and type '''cat /var/log/cfn-init.log'''.
+* You can use the Get System Log feature of EC2 to see the output of this template.
+
+* If you're on the Amazon Linux template, you can SSH onto the machine and type '''cat /var/log/cfn-init.log'''.
