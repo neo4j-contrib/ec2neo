@@ -144,7 +144,18 @@
                         "sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy\n",
                         "echo 'wrapper.java.additional=-Dneo4j.ext.udc.source=ec2neo' >> /etc/neo4j/neo4j-wrapper.conf\n",
                         "service neo4j-service restart\n",
-                        "service haproxy restart\n"
+                        "service haproxy restart\n",
+                        "cat <<EOF > /etc/cron.daily/neo4j_backup\n",
+                        "#!/bin/bash\n",
+                        "set -e\n",
+                        "backup_dir='/var/tmp/neo4j_backup'\n",
+                        "backup_archive='/mnt'\n",
+                        "neo4j-backup --from single://localhost -to \\${backup_dir}\n",
+                        "tar -czf \\${backup_archive}//neo4j_backup.\\$(date +%FT%T).tgz \\${backup_dir}\n",
+                        "rm -rf \\${backup_dir}\n",
+                        "EOF\n",
+                        "chown root:root /etc/cron.daily/neo4j_backup\n",
+                        "chmod 0755 /etc/cron.daily/neo4j_backup\n"
                 ]]}},
                 "Volumes" : [
                           { "VolumeId" : { "Ref" : "EBSVolume" },

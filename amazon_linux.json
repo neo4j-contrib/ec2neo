@@ -105,6 +105,19 @@
           },
           "yumRepoConfig": {
             "files": {
+              "/etc/cron.daily/neo4j_backup": {
+                "mode"    : "000755",
+                "owner"   : "root",
+                "group"   : "root",
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash",
+                  "set -e",
+                  "backup_dir='/var/tmp/neo4j_backup'",
+                  "backup_archive='/mnt'",
+                  "neo4j-backup --from single://localhost -to $backup_dir",
+                  "tar -czf ${backup_archive}//neo4j_backup.$(date +%FT%T).tgz ${backup_dir}",
+                  "rm -rf ${backup_dir}" ]]}
+              }
               "/etc/yum.repos.d/neo4j.repo" : {
                 "mode"    : "000644",
                 "owner"   : "root",
