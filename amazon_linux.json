@@ -117,7 +117,7 @@
                   "neo4j-backup --from single://localhost -to $backup_dir",
                   "tar -czf ${backup_archive}//neo4j_backup.$(date +%FT%T).tgz ${backup_dir}",
                   "rm -rf ${backup_dir}" ]]}
-              }
+              },
               "/etc/yum.repos.d/neo4j.repo" : {
                 "mode"    : "000644",
                 "owner"   : "root",
