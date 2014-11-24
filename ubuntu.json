@@ -4,7 +4,7 @@
   "Mappings" : {
 
     "AWSRegionArch2AMI" : {
-      "us-east-1"      : { "64" : "ami-a16772e4" },
+      "us-east-1"      : { "64" : "ami-1a059572" },
       "us-west-2"      : { "64" : "ami-927613a2" },
       "us-west-1"      : { "64" : "ami-c08dbc85" },
       "eu-west-1"      : { "64" : "ami-66ef0111" },
