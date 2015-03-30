@@ -30,23 +30,6 @@
           "Description": "Name of the SSH key that you will use to access the server (must be on AWS Availability Zone already)",
           "Type": "String"
       },
-        "DBUsername": {
-            "Description": "The Neo4j username",
-            "Type": "String",
-            "MinLength": "1",
-            "MaxLength": "16",
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
-            "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
-        },
-
-        "DBPassword": {
-            "NoEcho": "true",
-            "Description": "The Neo4j password",
-            "Type": "String",
-            "MinLength": "8",
-            "MaxLength": "41",
-            "ConstraintDescription": "Must be at least eight characters long."
-        },
 
         "NetworkWhitelist": {
             "Description": " The IP address range that can be used to connect to the Neo4j server (by REST or SSH)",
@@ -124,16 +107,9 @@
                         "    bind *:80\n",
                         "    default_backend neo4j\n",
                         "",
-                        "userlist users\n",
-                        "  user ",
-                        {"Ref": "DBUsername"},
-                        " insecure-password ",
-                        {"Ref": "DBPassword"},
                         "\n",
                         "backend neo4j\n",
                         "    server s1 127.0.0.1:7474 maxconn 32\n",
-                        "    acl authenticated http_auth(users)\n",
-                        "    http-request auth realm Neo4j if !authenticated\n",
                         "\n",
                         "listen admin\n",
                         "    bind *:8080\n",

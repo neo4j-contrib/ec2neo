@@ -2,9 +2,7 @@ require 'json'
 
 MAX_ATTEMPTS=30
 TIMESTAMP = Time.now.strftime('%FT%T').gsub(/:|-/,'')
-PARAMETERS = {DBUsername: 'test',
-              DBPassword: 'testtest',
-              SSHKeyName: ENV['SSHKEYNAME']}
+PARAMETERS = {SSHKeyName: ENV['SSHKEYNAME']}
 
 def get_expanded_params
   expanded_params = '--parameters '
@@ -50,7 +48,7 @@ def connect_to_neo(url,username, pass)
   response = ''
   attempts = 0
   until response.match(/cypher/) || attempts == MAX_ATTEMPTS
-    response = `curl -L -v -u #{username}:#{pass} #{url} 2>&1`
+    response = `curl -L -v -u neo4j:neo4j #{url} 2>&1`
     puts "DEBUG: #{response}"
     attempts += 1
     sleep 10
@@ -84,6 +82,7 @@ task :test => :validate do
 
     begin
       stack_attrs = get_stack_attributes(stack_name)
+      puts stack_attrs.inspect
       neo4j_endpoint = stack_attrs['Outputs'].select {|output| output['OutputKey'] == 'Neo4jEndPoint' }.first['OutputValue']
       db_output = connect_to_neo(neo4j_endpoint, PARAMETERS[:DBUsername], PARAMETERS[:DBPassword])
     rescue Exception => e

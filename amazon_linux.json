@@ -4,23 +4,6 @@
   "Description": "Neo4j on AWS - creates an EC2 Amazon Linux machine, EBS volume, static IP address, and deploys the Neo4j Graph Database on it.  **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template. **NOTE** This template needs Neo4j 2.0.1 to run.",
 
   "Parameters" : {
-    "DBUsername": {
-            "Description": "The Neo4j username",
-            "Type": "String",
-            "MinLength": "1",
-            "MaxLength": "16",
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
-            "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
-    },
-
-    "DBPassword": {
-            "NoEcho": "true",
-            "Description": "The Neo4j password",
-            "Type": "String",
-            "MinLength": "8",
-            "MaxLength": "41",
-            "ConstraintDescription": "Must be at least eight characters long."
-    },
 
     "SSHKeyName": {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
@@ -96,7 +79,7 @@
           "configDisk": {
             "commands": {
               "01formatFS": {
-                "command": "/sbin/mkfs.ext4 /dev/xvdj"
+                "command": "/sbin/mkfs.ext4 /dev/xvdj || true"
               },
               "02mkdir": {
                 "command": "mkdir -p /var/lib/neo4j"
@@ -137,8 +120,24 @@
                 "mode"    : "000644",
                 "owner"   : "root",
                 "group"   : "root"
-                },
-              "/etc/haproxy/haproxy.cfg": {
+                }
+            },
+       
+            "commands": {
+              "01 import key": {
+                "command": "rpm --import /tmp/neotechnology.gpg.key"
+              }
+            }
+          },
+          "neoInstall": {
+            "packages" : {
+              "yum" : {
+                "neo4j-enterprise"    : [],
+                "haproxy"             : []
+              }
+            },
+            "files": {
+                "/etc/haproxy/haproxy.cfg": {
                    "content": {
                        "Fn::Join": ["", [
                            "global\n",
@@ -155,17 +154,9 @@
                            "    bind *:80\n",
                            "    default_backend neo4j\n",
                            "",
-                           "userlist users\n",
-                           "  user ", {
-                               "Ref": "DBUsername"
-                           }, " insecure-password ", {
-                               "Ref": "DBPassword"
-                           }, "\n",
                            "\n",
                            "backend neo4j\n",
                            "    server s1 127.0.0.1:7474 maxconn 32\n",
-                           "    acl authenticated http_auth(users)\n",
-                           "    http-request auth realm Neo4j if !authenticated\n",
                            "\n",
                            "listen admin\n",
                            "    bind *:8080\n",
@@ -174,21 +165,6 @@
                    "mode": "000644",
                    "owner": "root",
                    "group": "root"
-              }
-            },
-
-
-            "commands": {
-              "01 import key": {
-                "command": "rpm --import /tmp/neotechnology.gpg.key"
-              }
-            }
-          },
-          "neoInstall": {
-            "packages" : {
-              "yum" : {
-                "neo4j-enterprise"    : [],
-                "haproxy"             : []
               }
             },
             "commands": {
@@ -200,6 +176,9 @@
               },
               "03 restart service": {
                 "command": "service neo4j restart"
+              },
+              "04 start haproxy": {
+                "command": "service haproxy start"
               }
             },
             "services" : {
@@ -224,19 +203,10 @@
           "#!/bin/bash -v\n",
           "yum update -y aws-cfn-bootstrap\n",
 
-          "# Helper function\n",
-          "function error_exit\n",
-          "{\n",
-          "  /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", { "Ref" : "WaitHandle" }, "'\n",
-          "  exit 1\n",
-          "}\n",
-
           "# Install packages\n",
           "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r Server ",
-          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+          "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n"
 
-          "# All is well so signal success\n",
-          "/opt/aws/bin/cfn-signal -e 0 -r \"Neo4j setup complete\" '", { "Ref" : "WaitHandle" }, "'\n"
         ]]}},
       "Volumes" : [
         { "VolumeId" : { "Ref" : "EBSVolume" },
@@ -252,18 +222,6 @@
       }
     },
 
-    "WaitHandle" : {
-      "Type" : "AWS::CloudFormation::WaitConditionHandle"
-    },
-
-    "WaitCondition" : {
-      "Type" : "AWS::CloudFormation::WaitCondition",
-      "DependsOn" : "Server",
-      "Properties" : {
-        "Handle" : {"Ref" : "WaitHandle"},
-        "Timeout" : "1500"
-      }
-    },
 
     "FrontendGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
@@ -274,8 +232,8 @@
           {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "NetworkWhiteList"}}
         ]
       }
-  }
-},
+    }
+  },
 
   "Outputs" : {
      "Neo4jWebadmin" : {
