@@ -8,6 +8,7 @@
       "us-west-2"      : { "64" : "ami-927613a2" },
       "us-west-1"      : { "64" : "ami-c08dbc85" },
       "eu-west-1"      : { "64" : "ami-66ef0111" },
+      "eu-central-1"   : { "64" : "ami-743c0a69" },
       "ap-southeast-1" : { "64" : "ami-f094c0a2" },
       "ap-southeast-2" : { "64" : "ami-978916ad" },
       "ap-northeast-1" : { "64" : "ami-8f78188e" },
