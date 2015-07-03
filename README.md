@@ -4,7 +4,7 @@
 
 CloudFormation templates that bootstrap Neo4j onto an [Amazon AWS](http://aws.amazon.com/) EC2 machine, in Amazon Linux or Ubuntu flavours.  These will install the _stable_ version of Neo4j.
 
-It's intended to help application developers get up and running quickly with Neo4j, without in-depth experience of Linux servers, AWS, or installing databases like Neo4j.
+It's intended to help application developers get up and running quickly with Neo4j, without in-depth experience of Linux servers, AWS, or installing databases like Neo4j.  It is _not_ indended for long term use: it doesn't use durable storage.
 
 What you'll get:
 * A Neo4j Enterprise installation, with a username and password of your choosing.
