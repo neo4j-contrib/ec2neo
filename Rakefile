@@ -1,6 +1,8 @@
 require 'json'
+require "net/http"
+require "uri"
 
-MAX_ATTEMPTS=30
+MAX_ATTEMPTS=50
 TIMESTAMP = Time.now.strftime('%FT%T').gsub(/:|-/,'')
 PARAMETERS = {SSHKeyName: ENV['SSHKEYNAME']}
 
@@ -44,16 +46,41 @@ def delete_stack(stack_name)
   end
 end
 
+def ready?(response)
+  puts response.inspect
+  begin
+    puts response['location']
+  rescue
+  end
+  if response.nil?
+    return false
+  elsif response.class == Net::HTTPServiceUnavailable
+    return false
+  elsif response.class == Net::HTTPForbidden
+    return true
+  else
+    return false
+  end
+end
+
 def connect_to_neo(url,username, pass)
-  response = ''
+  response = nil
   attempts = 0
-  until response.match(/cypher/) || attempts == MAX_ATTEMPTS
-    response = `curl -L -v -u neo4j:neo4j #{url} 2>&1`
-    puts "DEBUG: #{response}"
+  uri = URI.parse(url)
+  http = Net::HTTP.new(uri.host, uri.port)
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request.basic_auth("neo4j", "neo4j")
+
+  until ready?(response)|| attempts == MAX_ATTEMPTS
     attempts += 1
     sleep 10
+    begin
+      response = http.request(request)
+      echo response
+    rescue
+    end
   end
-  response
+  response.body
 end
 
 def test_for_ssh_key
@@ -91,7 +118,7 @@ task :test => :validate do
     end
 
     delete_stack(stack_name)
-    raise "Couldn't connect to Neo4j!" unless db_output.match(/db\/data\/cypher/)
+    raise "Couldn't connect to Neo4j!" unless db_output.match(/password_change/)
   end
 end
 

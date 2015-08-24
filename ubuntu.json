@@ -177,7 +177,7 @@
             "Description" : "This is the address of your Neo4j server web administration console."
           },
         "Neo4jEndPoint" : {
-            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, "/db/data"]] },
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "Server", "PublicIp" ]}, "/db/data/"]] },
             "Description" : "This is the address of your Neo4j server, that your application will use."
           },
         "SshAccess": {
