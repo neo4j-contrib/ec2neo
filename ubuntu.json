@@ -89,6 +89,7 @@
                         "mkdir -p /var/lib/neo4j\n",
                         "mkfs.ext4 /dev/xvdj\n",
                         "mount /dev/xvdj /var/lib/neo4j\n",
+                        "echo '/dev/xvdj /var/lib/neo4j auto defaults 0 0' > /etc/fstab\n",
                         "wget -O - http://debian.neo4j.org/neotechnology.gpg.key| apt-key add -\n",
                         "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list\n",
                         "apt-get update -y\n",
