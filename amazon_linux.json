@@ -104,7 +104,7 @@
                 "command": "/bin/mount /dev/xvdj /var/lib/neo4j"
               },
               "04mountOnReboot": {
-                "command": "echo '/dev/xvdj /var/lib/neo4j auto defaults 0 0' > /etc/fstab"
+                "command": "echo '/dev/xvdj /var/lib/neo4j auto defaults 0 0' >> /etc/fstab"
               }
             }
           },
