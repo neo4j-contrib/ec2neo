@@ -27,9 +27,10 @@
         "ConstraintDescription" : "Must be a valid EC2 instance type."
       },
 
+
       "SSHKeyName": {
-          "Description": "Name of the SSH key that you will use to access the server (must be on AWS Availability Zone already)",
-          "Type": "String"
+        "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+        "Type": "AWS::EC2::KeyPair::KeyName"
       },
 
         "NetworkWhitelist": {
